@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<script src="./build/react.js"></script>
+<script src="./build/react-dom.js"></script>
+<script src="./build/browser.min.js"></script>
+<script src="./build/jquery.min.js"></script>
+
+
+<div id="temp"></div>
+<script type="text/babel">
+
+    var TodoList = React.createClass({
+        getInitialState: function () {
+            return {
+                //state用来控制todolist
+                todolist: []
+            };
+        },
+
+        handleChange: function (rows) {
+            //当发生增删改查时改变state重新渲染
+            this.setState({
+                todolist: rows
+            });
+        },
+
+
+        render: function () {
+            return (
+                //添加子组件
+                    <div>
+                        <TypeNew todo={this.state.todolist} add={this.handleChange}/>
+                        <ListTodo todo={this.state.todolist} change={this.handleChange}/>
+                    </div>
+            );
+        }
+    });
+
+    //输入框组件
+    var TypeNew = React.createClass({
+        handleAdd: function () {
+
+            //获取数据
+            var newthing = this.refs.inputnew.value.trim();
+            var rows = this.props.todo;
+            //如果输入的数据为空值则返回提示无法添加
+            if (newthing == "") {
+                alert("数据不能为空");
+                return;
+            }
+            //在数组内添加新数据
+            rows.push(newthing);
+            //回调改变state
+            this.props.add(rows);
+            //清空输入框
+            this.refs.inputnew.value = "";
+        },
+        render: function () {
+            return (
+                    <form>
+                        <input type="text" ref="inputnew" placeholder="typing a newthing todo"
+                               autoComplete="off"/>
+                        <input type="button" value="提交" onClick={this.handleAdd}/>
+                    </form>
+            );
+        }
+    });
+
+    //ListTodo 用于展示、修改、删除数据
+    var ListTodo = React.createClass({
+        //子组件state用于记录修改状态
+        getInitialState: function () {
+            return {
+                //changenum记录是哪一个list要修改,changevalue记录要修改的list的值
+                changenum: -1,
+                changevalue: ""
+            }
+        },
+
+        //删除数据
+        handleDel: function (e) {
+            var rows = this.props.todo;
+            var index = e.target.getAttribute("data-index");
+            rows.splice(index, 1);
+            this.props.change(rows);
+            //防止修改后按删除按钮产生bug
+            this.setState({
+                changenum: -1
+            });
+        },
+        //点击修改按钮后改变state
+        handleChange: function (e) {
+            var index = e.target.getAttribute("data-index");
+            var msg = this.props.todo[index];
+            this.setState({
+                changenum: index,
+                changevalue: msg
+            });
+        },
+        //react中设置了value后无法进行输入，根据API 此办法解决
+        handleText: function (e) {
+            this.setState({
+                changevalue: e.target.value
+            })
+        },
+        //保存事件 获取修改后的数据 与增加数据同理
+        handleSave: function () {
+            //var inputDom = this.refs.inputnew.getDOMNode();
+
+            var newthing = this.refs.inputnew.value.trim();
+            var rows = this.props.todo;
+            if (newthing == "") {
+                alert("数据不能为空");
+                return;
+            }
+            var index = this.state.changenum;
+            //rows[index]改变为新的数据
+            rows[index] = newthing;
+            //回调
+            this.props.change(rows);
+            //改变当前state回到展示状态
+            this.setState({
+                changenum: -1
+            });
+        },
+
+        render: function () {
+            return (
+                    <ul id="todolist">
+                        {
+                            this.props.todo.map(function (item, i) {
+                                //如果有点击修改则将此处渲染成type框
+                                if (this.state.changenum == i) {
+                                    return (
+                                            <li key={i}>
+                                                <input type="text" ref="inputnew" value={this.state.changevalue}
+                                                       onChange={this.handleText}/>
+                                                <button onClick={this.handleSave}>确定</button>
+                                            </li>
+                                    )
+                                }
+                                else {
+                                    return (
+                                            <li key={i}>
+                                                <span>{item}</span>
+                                                <button onClick={this.handleDel} data-index={i}>删除</button>
+                                                <button onClick={this.handleChange} data-index={i}>修改</button>
+                                            </li>
+
+                                    );
+                                }
+                            }.bind(this))
+                        }
+                    </ul>
+            );
+        }
+    });
+
+
+    ReactDOM.render(<TodoList/>,
+        document.getElementById('temp')
+    );
+</script>
+</body>
+</html>
